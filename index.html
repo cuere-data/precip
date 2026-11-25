@@ -8,11 +8,11 @@
 <style>
   :root {
     --surface: #ffffff; --text: #191919; --text2: #666666; --border: #d9d9d9;
-    --g1: #257de0; --g2: #f47230; --grid: #ececec;
+    --g1: #ec4647; --g2: #257de0; --grid: #ececec;
   }
   @media (prefers-color-scheme: dark) {
     :root { --surface: #191919; --text: #efefef; --text2: #9c9c9c; --border: #3a3a3a;
-            --g1: #338ced; --g2: #e76624; --grid: #2c2c2c; }
+            --g1: #eb6263; --g2: #338ced; --grid: #2c2c2c; }
   }
   * { box-sizing: border-box; }
   body { margin: 0; padding: 24px; font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -34,6 +34,7 @@
   .total b { display: block; font-size: 1.3rem; color: var(--text); }
   .swatch { display: inline-block; width: 18px; height: 0; border-top: 3px solid; vertical-align: middle; margin-right: 6px; }
   details { font-size: .85rem; color: var(--text2); margin-top: 12px; }
+  summary { font-size: 1.05rem; color: var(--text); cursor: pointer; padding: 4px 0; }
   details .row { margin: 8px 0; }
   table { border-collapse: collapse; font-size: .85rem; margin-top: 8px; }
   th, td { padding: 3px 12px; border-bottom: 1px solid var(--border); text-align: right; }
@@ -43,13 +44,12 @@
 <body>
 <main>
   <h1>Cumulative Precipitation</h1>
-  <p class="sub">Running total of rain from the start date. Each day's tip amounts are added together; days with no tips count as 0.</p>
+  <p class="sub">Running total of rain from the start date to the end date.</p>
 
   <div class="controls">
     <label>Site <select id="site"></select></label>
     <label>Start date <input type="date" id="start"></label>
     <label>End date <input type="date" id="end"></label>
-    <button id="full" type="button">First date to today</button>
     <button id="reset" type="button">Reset</button>
   </div>
   <p id="status">Loading data…</p>
@@ -58,13 +58,13 @@
   <div id="chart"></div>
 
   <details>
+    <summary>Show daily values as a table</summary>
+    <div id="table"></div>
+  </details>
+  <details>
     <summary>Load a data file manually</summary>
     <p>Use this if the page can't load the files automatically (for example, when the page is opened straight from your computer).</p>
     <div id="manual"></div>
-  </details>
-  <details>
-    <summary>Show daily values as a table</summary>
-    <div id="table"></div>
   </details>
 </main>
 
@@ -220,7 +220,7 @@ function render(note) {
 
   const trace = (name, y, daily, color, dash) => ({
     x: s.x, y, name, type: "scatter", mode: s.x.length > 60 ? "lines" : "lines+markers",
-    line: { color, width: 2, dash }, marker: { size: 8, color },
+    line: { color, width: 3, dash }, marker: { size: 8, color },
     customdata: daily,
     hovertemplate: `${name}: %{y:.2f} in (that day %{customdata:.2f} in)<extra></extra>`
   });
@@ -258,7 +258,7 @@ function render(note) {
     s.x.map((d, i) => `<tr><td>${d}</td><td>${s.d1[i].toFixed(2)}</td><td>${s.c1[i].toFixed(2)}</td>` +
       `<td>${s.d2[i].toFixed(2)}</td><td>${s.c2[i].toFixed(2)}</td></tr>`).join("") + "</table>";
 
-  setStatus(`${recorded} Days after the last record count as 0.` + (note ? " " + note : ""));
+  setStatus(recorded + (note ? " " + note : ""));
 }
 
 // Switching sites keeps the chosen dates, adjusted only if they fall outside the new site's data.
@@ -314,10 +314,6 @@ async function init() {
   $("site").addEventListener("change", onSiteChange);
   $("start").addEventListener("change", () => render());
   $("end").addEventListener("change", () => render());
-  $("full").addEventListener("click", () => {
-    if (data[$("site").value]) setRangeLimits($("site").value, false);
-    render();
-  });
   $("reset").addEventListener("click", () => {   // clear the dates and the graph
     $("start").value = ""; $("end").value = "";
     render();
