@@ -29,6 +29,10 @@
   #status { color: var(--text2); font-size: .9rem; min-height: 1.2em; }
   #status.err { color: #c0392b; }
   #chart { width: 100%; height: 480px; }
+  #chart .modebar { border: 1px solid var(--border); border-radius: 6px; padding: 2px 4px;
+                    box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+  #chart .modebar-btn path { fill: var(--text) !important; }
+  #chart .modebar-btn:hover path, #chart .modebar-btn.active path { fill: var(--g2) !important; }
   .totals { display: flex; gap: 28px; flex-wrap: wrap; margin: 8px 0 20px; }
   .total { font-size: .85rem; color: var(--text2); }
   .total b { display: block; font-size: 1.3rem; color: var(--text); }
@@ -280,6 +284,8 @@ function render(note) {
     font: { family: "system-ui, sans-serif", color: text, size: 12 },
     margin: { l: 90, r: 24, t: 10, b: 80 },
     hovermode: "x unified",
+    // Graph controls (upper right): solid box, dark icons, blue when hovered or active
+    modebar: { bgcolor: css("--surface"), color: text, activecolor: css("--g2"), orientation: "h" },
     hoverlabel: { font: { color: "#191919" } },
     legend: { orientation: "h", x: 0, y: 1.08, font: { color: text } },
     xaxis: {
@@ -296,7 +302,8 @@ function render(note) {
     }
   };
   Plotly.react("chart", [trace(n1, s.c1, s.d1, g1, "solid"), trace(n2, s.c2, s.d2, g2, "dash")],
-               layout, { responsive: true, displaylogo: false });
+               layout, { responsive: true, displaylogo: false,
+                         modeBarButtonsToRemove: ["resetScale2d"] });
 
   const last = s.x.length - 1;
   $("totals").innerHTML =
