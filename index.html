@@ -212,14 +212,27 @@ function tickStepDays(nDays) {
   return CONFIG.tickDays * Math.max(1, Math.ceil(nDays / CONFIG.tickDays / maxLabels));
 }
 
-function clearChart() {
-  Plotly.purge("chart"); $("totals").innerHTML = ""; $("table").innerHTML = "";
+// Empty graph (axes, grid and a prompt) shown before dates are picked or after Reset.
+function clearChart(message) {
+  $("totals").innerHTML = ""; $("table").innerHTML = "";
+  const text2 = css("--text2"), grid = css("--grid");
+  Plotly.react("chart", [], {
+    paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    font: { family: "system-ui, sans-serif", color: text2, size: 12 },
+    margin: { l: 64, r: 20, t: 10, b: 64 },
+    xaxis: { showticklabels: false, gridcolor: grid, linecolor: grid,
+             zeroline: false, fixedrange: true, range: [0, 1] },
+    yaxis: { title: { text: "Cumulative precipitation (inches)" }, range: [0, 1], tickformat: ".2f",
+             gridcolor: grid, linecolor: grid, zeroline: false, fixedrange: true },
+    annotations: [{ text: message || "Select a start date and an end date", showarrow: false,
+                    xref: "paper", yref: "paper", x: 0.5, y: 0.5, font: { size: 15, color: text2 } }]
+  }, { displayModeBar: false, responsive: true, displaylogo: false });
 }
 
 function render(note) {
   const site = $("site").value;
   if (!data[site]) {
-    clearChart();
+    clearChart("No data loaded for this site");
     setStatus(`No data loaded for ${site}. Use "Load a data file manually" below.`, true);
     return;
   }
