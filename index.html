@@ -98,7 +98,7 @@ const CONFIG = {
   // Gage columns already hold rain in inches for each tip event (0.01, 0.021, ...),
   // so they are added up as-is. If a file ever held tip counts instead, set this to 0.01.
   valueMultiplier: 1,
-  tickDays: 14
+  maxXLabels: 30
 };
 /* =========================================================== */
 
@@ -207,11 +207,6 @@ function clampInputs() {
   return [s, e];
 }
 
-function tickStepDays(nDays) {
-  const maxLabels = Math.max(4, Math.floor(($("chart").clientWidth || 900) / 70));
-  return CONFIG.tickDays * Math.max(1, Math.ceil(nDays / CONFIG.tickDays / maxLabels));
-}
-
 // Empty graph (axes, grid and a prompt) shown before dates are picked or after Reset.
 function clearChart(message) {
   $("totals").innerHTML = ""; $("table").innerHTML = "";
@@ -230,6 +225,28 @@ function clearChart(message) {
   }, { displayModeBar: false, responsive: true, displaylogo: false });
 }
 
+// X-axis label dates: every day up to 30 days; beyond that every 2nd, 3rd, ... day so there
+// are never more than 30 labels (fewer on narrow screens). The end date is always labeled.
+function tickDates(start, end) {
+  const n = Math.round((toMs(end) - toMs(start)) / DAY_MS) + 1;   // number of days shown
+  const width = $("chart").clientWidth || 1000;
+  const maxLabels = Math.max(5, Math.min(CONFIG.maxXLabels, Math.floor(width / 24)));
+  const step = Math.ceil(n / maxLabels);
+  const at = d => toStr(toMs(start) + d * DAY_MS);
+  const t = [];
+  for (let d = 0; d < n; d += step) t.push(at(d));
+  if (t[t.length - 1] !== end) {
+    const gap = (n - 1) % step;                                   // days from last label to end
+    if (t.length >= maxLabels || (gap < step / 2 && t.length > 1)) t.pop();
+    t.push(end);
+  }
+  return t;
+}
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const tickLabel = (d, upright) => upright
+  ? `${MONTHS[+d.slice(5, 7) - 1]} ${d.slice(8)}<br>${d.slice(0, 4)}`
+  : `${MONTHS[+d.slice(5, 7) - 1]} ${d.slice(8)}, ${d.slice(0, 4)}`;
+
 function render(note) {
   const site = $("site").value;
   if (!data[site]) {
@@ -245,13 +262,15 @@ function render(note) {
   }
   const [start, end] = clampInputs();
   const s = buildSeries(site, start, end);
+  const ticks = tickDates(start, end);
+  const upright = ticks.length * 100 < ($("chart").clientWidth || 1000);   // turn labels sideways when crowded
   const [n1, n2] = CONFIG.gageNames;
   const text = css("--text"), text2 = css("--text2"), grid = css("--grid");
   const g1 = css("--g1"), g2 = css("--g2");
 
   const trace = (name, y, daily, color, dash) => ({
     x: s.x, y, name, type: "scatter", mode: s.x.length > 60 ? "lines" : "lines+markers",
-    line: { color, width: 3, dash }, marker: { size: 8, color },
+    line: { color, width: 3, dash, shape: "hv" }, marker: { size: 8, color },
     customdata: daily,
     hovertemplate: `${name}: %{y:.2f} in (that day %{customdata:.2f} in)<extra></extra>`
   });
@@ -264,9 +283,10 @@ function render(note) {
     hoverlabel: { font: { color: "#191919" } },
     legend: { orientation: "h", x: 0, y: 1.08, font: { color: text } },
     xaxis: {
-      // Labels every 14 days; on long ranges use every 28, 42, ... days so labels don't overlap.
-      type: "date", tick0: start, dtick: tickStepDays(s.x.length) * DAY_MS,
-      tickformat: "%b %d<br>%Y", hoverformat: "%b %d, %Y",
+      // Label dates come from tickDates() above.
+      type: "date", tickmode: "array", tickvals: ticks, ticktext: ticks.map(d => tickLabel(d, upright)),
+      tickangle: upright ? 0 : -90, automargin: true,
+      hoverformat: "%b %d, %Y",
       range: [toMs(start) - DAY_MS / 2, toMs(end) + DAY_MS / 2],
       gridcolor: grid, linecolor: grid, zeroline: false, tickfont: { size: 16, weight: "bold" }
     },
