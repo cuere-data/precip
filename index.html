@@ -36,6 +36,10 @@
   details { font-size: .85rem; color: var(--text2); margin-top: 12px; }
   summary { font-size: 1.05rem; color: var(--text); cursor: pointer; padding: 4px 0; }
   details .row { margin: 8px 0; }
+  .site-info { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .site-info h2 { font-size: 1.15rem; font-weight: 700; color: var(--text); margin: 0 0 10px; }
+  .site-info p { font-size: .9rem; font-weight: 400; color: var(--text); margin: 0 0 6px; line-height: 1.45; }
+  .site-info a { color: var(--g2); }
   table { border-collapse: collapse; font-size: .85rem; margin-top: 8px; }
   th, td { padding: 3px 12px; border-bottom: 1px solid var(--border); text-align: right; }
   th:first-child, td:first-child { text-align: left; }
@@ -66,6 +70,15 @@
     <p>Use this if the page can't load the files automatically (for example, when the page is opened straight from your computer).</p>
     <div id="manual"></div>
   </details>
+  <section class="site-info">
+    <h2>Site Information</h2>
+    <p><span class="k">Site ID:</span> <span id="siteId"></span></p>
+    <p><span class="k">Location:</span> <span id="siteLoc"></span></p>
+    <p>Contact: Precipitation records for this station are managed by the
+      <a href="https://cuere.umbc.edu/" target="_blank" rel="noopener">Center for Urban Environmental Research and Education</a>,
+      University of Maryland Baltimore County. For any inquiries or issues please contact Claire Welty (weltyc@umbc.edu).</p>
+    <p>Web Design: Jack Malone, UMBC</p>
+  </section>
 </main>
 
 <script>
@@ -74,8 +87,12 @@ const CONFIG = {
   // One converted data file per site, in the same folder as this page
   // (later this can be a full web address on another server).
   sites: [
-    { name: "Dead Run Near Catonsville", file: "DR5_Precip.dat" },
-    { name: "UMBC Campus",               file: "UMBC-TRC_Precip.dat" }
+    { name: "Dead Run Near Catonsville", file: "DR5_Precip.dat",
+      siteId: "Rain Gage at Dead Run Near Catonsville WXDRNC",
+      location: `39°17'45.186"N, 76°44'38.504"W, Baltimore County, Hydrologic Unit 02060003, on right bank at upstream side of culvert on Black Friars Road, 1.1 mi north of Catonsville, 1.7 mi southwest of Woodlawn, and 1.8 mi west of Baltimore City.` },
+    { name: "UMBC Campus", file: "UMBC-TRC_Precip.dat",
+      siteId: "Rain Gage at UMBC Campus WXUMBC",
+      location: `39°15'15.482"N, 76°42'8.422"W, Baltimore County, Hydrologic Unit 02060003` }
   ],
   gageNames: ["Gage 1", "Gage 2"], // gage 1 = 2nd-to-last column, gage 2 = last column
   // Gage columns already hold rain in inches for each tip event (0.01, 0.021, ...),
@@ -206,10 +223,10 @@ function render(note) {
     setStatus(`No data loaded for ${site}. Use "Load a data file manually" below.`, true);
     return;
   }
-  const recorded = `${site}: data recorded ${data[site].first} to ${data[site].last}.`;
+  const recorded = `${site}: full range of recorded data: ${data[site].first} to ${data[site].last}`;
   if (!$("start").value || !$("end").value) {
     clearChart();
-    setStatus(`${recorded} Pick a start date and an end date to draw the graph.`);
+    setStatus(`${recorded}. Pick a start date and an end date to draw the graph.`);
     return;
   }
   const [start, end] = clampInputs();
@@ -258,12 +275,19 @@ function render(note) {
     s.x.map((d, i) => `<tr><td>${d}</td><td>${s.d1[i].toFixed(2)}</td><td>${s.c1[i].toFixed(2)}</td>` +
       `<td>${s.d2[i].toFixed(2)}</td><td>${s.c2[i].toFixed(2)}</td></tr>`).join("") + "</table>";
 
-  setStatus(recorded + (note ? " " + note : ""));
+  setStatus(recorded + (note ? ". " + note : ""));
 }
 
 // Switching sites keeps the chosen dates, adjusted only if they fall outside the new site's data.
+function updateSiteInfo(site) {
+  const info = CONFIG.sites.find(s => s.name === site) || {};
+  $("siteId").textContent = info.siteId || "";
+  $("siteLoc").textContent = info.location || "";
+}
+
 function onSiteChange() {
   const site = $("site").value;
+  updateSiteInfo(site);
   if (!data[site]) { render(); return; }
   setRangeLimits(site, true);
   const { first, last } = rangeFor(site);
