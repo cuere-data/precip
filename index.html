@@ -219,11 +219,11 @@ function clearChart(message) {
   Plotly.react("chart", [], {
     paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
     font: { family: "system-ui, sans-serif", color: text, size: 12 },
-    margin: { l: 76, r: 20, t: 10, b: 72 },
+    margin: { l: 90, r: 24, t: 10, b: 80 },
     xaxis: { showticklabels: false, gridcolor: grid, linecolor: grid,
              zeroline: false, fixedrange: true, range: [0, 1] },
-    yaxis: { title: { text: "Cumulative precipitation (inches)", font: { size: 16 } }, range: [0, 1], tickformat: ".2f",
-             tickfont: { size: 14 },
+    yaxis: { title: { text: "Cumulative precipitation (inches)", font: { size: 18, weight: "bold" } }, range: [0, 1], tickformat: ".2f",
+             tickfont: { size: 16, weight: "bold" },
              gridcolor: grid, linecolor: grid, zeroline: false, fixedrange: true },
     annotations: [{ text: message || "Select a start date and an end date", showarrow: false,
                     xref: "paper", yref: "paper", x: 0.5, y: 0.5, font: { size: 15, color: text2 } }]
@@ -259,7 +259,7 @@ function render(note) {
   const layout = {
     paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
     font: { family: "system-ui, sans-serif", color: text, size: 12 },
-    margin: { l: 76, r: 20, t: 10, b: 72 },
+    margin: { l: 90, r: 24, t: 10, b: 80 },
     hovermode: "x unified",
     hoverlabel: { font: { color: "#191919" } },
     legend: { orientation: "h", x: 0, y: 1.08, font: { color: text } },
@@ -268,11 +268,11 @@ function render(note) {
       type: "date", tick0: start, dtick: tickStepDays(s.x.length) * DAY_MS,
       tickformat: "%b %d<br>%Y", hoverformat: "%b %d, %Y",
       range: [toMs(start) - DAY_MS / 2, toMs(end) + DAY_MS / 2],
-      gridcolor: grid, linecolor: grid, zeroline: false, tickfont: { size: 14 }
+      gridcolor: grid, linecolor: grid, zeroline: false, tickfont: { size: 16, weight: "bold" }
     },
     yaxis: {
-      title: { text: "Cumulative precipitation (inches)", font: { color: text, size: 16 } },
-      rangemode: "tozero", tickformat: ".2f", gridcolor: grid, zeroline: false, tickfont: { size: 14 }
+      title: { text: "Cumulative precipitation (inches)", font: { color: text, size: 18, weight: "bold" } },
+      rangemode: "tozero", tickformat: ".2f", gridcolor: grid, zeroline: false, tickfont: { size: 16, weight: "bold" }
     }
   };
   Plotly.react("chart", [trace(n1, s.c1, s.d1, g1, "solid"), trace(n2, s.c2, s.d2, g2, "dash")],
